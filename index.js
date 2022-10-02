@@ -13,14 +13,18 @@ dbConnection();
 //Route
 //config CORS 
 app.use( cors() );
+// Read and parse of body
+app.use(express.json());
 
-
-app.get('/', (req,res) => {
+app.use('/api/users',require('./routes/users-route.js'));
+app.use('/api/login',require('./routes/login-route.js'));
+/*app.get('/', (req,res) => {
     res.status(400).json({
        ok: true,
        msg:'Hello World' 
     })
 });
+*/
 //const port = 3000;
 app.listen(process.env.PORT, () => {
     console.log('server running in port ' + process.env.PORT)

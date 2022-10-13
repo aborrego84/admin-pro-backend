@@ -5,11 +5,24 @@ const UserModel = require('../models/users-model');
 const { generateJWT } = require('../helpers/jwt');
 
 const getUsers = async (req,res) => {
-    const users = await UserModel.find({},'name email role google');
-
+    const since = Number(req.query.since) || 0;
+    //console.log(since);
+    /*const users = await UserModel.find({},'name email role google')
+                                 .skip(since)
+                                 .limit(5);
+    const total = await UserModel.count();*/
+    const [users,total] = await Promise.all([
+        UserModel
+            .find({},'name email role google img')
+            .skip(since)
+            .limit(5),
+            UserModel.count()
+    ])
     res.status(400).json({
        ok: true,
-       users,uid:req.uid,
+       users,
+       uid:req.uid,
+       total,
     })
 } 
 
@@ -91,23 +104,7 @@ const updateUser = async (req, res = response) =>{
         })
     }
 }
- const deleteUser = async (req,res = response) => {
-   /* const uid = req.params.id;
-    try {
-        const user = await UserModel.findByIdAndDelete({_id:uid});
-        return res.status(400).json({
-        ok: true,
-        msg:'The user was delete.'
-        })
-    }
-    catch (error) {
-        console.log(error);
-        res.status(500).json({
-            ok: false,
-            msg: 'Unexpected Error'
-    
-        })
-    } */
+ const deleteUser = async (req,res = response) => {   
     const uid = req.params.id;
     try {
         console.log(uid);

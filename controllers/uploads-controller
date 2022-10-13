@@ -1,0 +1,83 @@
+const path = require('path');
+const fs = require('fs');
+const { response } = require('express');
+const { v4:uuidv4 } = require('uuid');
+const { updateImage } = require('../helpers/update-image');
+
+
+const fileUpload = async (req, res = response) =>{
+    const table = req.params.table;
+    const id = req.params.id;    
+    //validate exist table in DB
+    const tablesValid = ['hospitals','doctors','users'];
+    if(!tablesValid.includes(table))
+    {
+        return res.status(404).json({
+            ok:false,
+            msg:'That table is not in our system.'
+        })
+    } 
+    //validate exist file
+    if(!req.files || Object.keys(req.files).length === 0)
+    {
+        return res.status(400).json({
+            ok : false,
+            msg :'No files were uploaded.'
+        });
+    }
+    //process image
+    const file = req.files.imagen;
+    const nameSplitFile = file.name.split('.');
+    const fileExt = nameSplitFile[nameSplitFile.length - 1];
+    //validate extension file
+    const validExtensions = ['png','jpg','jpeg','gif'];
+    if(!validExtensions.includes(fileExt))
+    {
+        return res.status(404).json({
+            ok:false,
+            msg:'That extension is not valid.'
+        })
+    }
+    //generate name file
+    const fileName =`${uuidv4()}.${fileExt}`;   
+    //path to save
+    const filePath = `./uploads/${table}/${fileName}`;
+    file.mv(filePath, (err) => {
+        if(err)
+        {
+            console.log(err);
+            return res.status(500).json({
+                of: false,
+                msg: "There are a problem upload archive."
+            })
+        }
+    //update DB
+    updateImage(table,id,fileName);
+
+    return res.json({
+        ok: true,
+        msg: 'Upload satisfactorily.',
+        file:fileName
+    });  
+    });    
+}
+const getFile = async (req, res = response) =>{
+    const table = req.params.table;
+    const fileName = req.params.fileName;
+    const pathImage = path.join(__dirname,`../uploads/${table}/${fileName}`);
+    //image exist
+    if(fs.existsSync(pathImage))
+    {
+        res.sendFile(pathImage);
+    }
+    else{
+        res.sendFile(path.join(__dirname,`../uploads/no-img.jpg`));
+    }
+    
+    
+}
+
+module.exports = {
+    fileUpload,
+    getFile
+}
